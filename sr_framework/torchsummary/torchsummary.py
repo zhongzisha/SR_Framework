@@ -4,7 +4,8 @@ import pandas as pd
 import torch
 
 # Some modules do the computation themselves using parameters or the parameters of children, treat these as layers
-layer_modules = (torch.nn.MultiheadAttention, )
+layer_modules = (torch.nn.MultiheadAttention,)
+
 
 def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **kwargs):
     """Summarize the given input model.
@@ -16,6 +17,7 @@ def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **
                     dtype and device have to match to the model
         args, kwargs: Other argument used in `model.forward` function
     """
+
     def register_hook(module):
         def hook(module, inputs, outputs):
             cls_name = str(module.__class__).split(".")[-1].split("'")[0]
@@ -119,10 +121,10 @@ def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **
 
     df_total = pd.DataFrame(
         {"Total params": (df_sum["Params"] + df_sum["params_nt"]),
-        "Trainable params": df_sum["Params"],
-        "Non-trainable params": df_sum["params_nt"],
-        "Mult-Adds": df_sum["Mult-Adds"]
-        },
+         "Trainable params": df_sum["Params"],
+         "Non-trainable params": df_sum["params_nt"],
+         "Mult-Adds": df_sum["Mult-Adds"]
+         },
         index=['Totals']
     ).T
     return df_sum['Params'], df_sum['Mult-Adds']
@@ -134,13 +136,14 @@ def summary(model, x, *args, layer_modules=layer_modules, print_summary=True, **
             "display.float_format", pd.io.formats.format.EngFormatter(use_eng_prefix=True)
         )
         with option:
-            print("="*max_repr_width)
+            print("=" * max_repr_width)
             print(df.replace(np.nan, "-"))
-            print("-"*max_repr_width)
+            print("-" * max_repr_width)
             print(df_total)
-            print("="*max_repr_width)
+            print("=" * max_repr_width)
 
     return df, df_total
+
 
 def get_names_dict(model):
     """Recursive walk to get names including path."""
@@ -153,7 +156,7 @@ def get_names_dict(model):
             if num_named_children > 0:
                 name = parent_name + "." + key if parent_name else key
             else:
-                name = parent_name + "." + cls_name + "_"+ key if parent_name else key
+                name = parent_name + "." + cls_name + "_" + key if parent_name else key
             names[name] = m
 
             if isinstance(m, torch.nn.Module):

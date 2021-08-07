@@ -8,16 +8,16 @@ import os.path as osp
 import imageio
 import pickle
 
+
 class Base(data.Dataset):
     def __init__(self, opt):
         super(Base, self).__init__()
         self.opt = opt
-        if self.opt['dataroot_HR'] != None:
+        if self.opt['dataroot_HR'] is not None:
             self.convert_img_to_pt('dataroot_HR')
-        if self.opt['dataroot_LR'] != None:
+        if self.opt['dataroot_LR'] is not None:
             self.convert_img_to_pt('dataroot_LR')
-        
-        
+
     def __len__(self):
         pass
 
@@ -38,12 +38,12 @@ class Base(data.Dataset):
                 return
 
             os.makedirs(new_dir_path)
-            
+
             # load every image and convert to .pth file
             for i in range(len(img_list)):
                 base, ext = osp.splitext(img_list[i])
                 src_path = osp.join(self.opt[key], img_list[i])
-                dst_path = osp.join(new_dir_path, base+'.pt')
+                dst_path = osp.join(new_dir_path, base + '.pt')
                 with open(dst_path, 'wb') as _f:
                     pickle.dump(imageio.imread(src_path, pilmode='RGB'), _f)
 
@@ -64,17 +64,17 @@ class Base(data.Dataset):
     def get_patch(self, lr, hr, ps, scale):
         lr_h, lr_w = lr.shape[:2]
         hr_h, hr_w = hr.shape[:2]
-        
+
         lr_x = random.randint(0, lr_w - ps)
         lr_y = random.randint(0, lr_h - ps)
         hr_x = lr_x * scale
         hr_y = lr_y * scale
 
-        lr_patch = lr[lr_y:lr_y+ps, lr_x:lr_x+ps, :]
-        hr_patch = hr[hr_y:hr_y+ps*scale, hr_x:hr_x+ps*scale, :]
+        lr_patch = lr[lr_y:lr_y + ps, lr_x:lr_x + ps, :]
+        hr_patch = hr[hr_y:hr_y + ps * scale, hr_x:hr_x + ps * scale, :]
 
         return lr_patch, hr_patch
-    
+
     def augment(self, lr, hr, flip=True, rot=True):
         hflip = flip and random.random() < 0.5
         vflip = flip and random.random() < 0.5

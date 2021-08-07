@@ -1,10 +1,10 @@
 #generate settings
 name: ~
 mode: SR
-gpu_ids: [3]
+gpu_ids: [1]
 
 scale: 2
-patch_size: 96
+patch_size: 64
 train_Y: false
 use_chop: true
 
@@ -36,23 +36,23 @@ networks:
   out_channels: 3
   n_resblocks: 16
   dataparallel: false
-      
+
 #path to save
 paths:
   experiment_root: ./experiment
   root: ~ # determined by model_name
-  epochs: ~ 
-  visual: ~ 
+  epochs: ~
+  visual: ~
   records: ~
 
 #optimizer
 solver:
   type: ADAM
   init_type: kaiming
-  learning_rate: !!float 1e-3
+  learning_rate: !!float 2e-4
   weight_decay: 0
   lr_scheme: MultiStepLR
-  lr_steps: 
+  lr_steps:
     - 200
     - 400
     - 600

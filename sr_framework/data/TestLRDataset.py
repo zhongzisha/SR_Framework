@@ -4,6 +4,7 @@ import torch
 from .BaseDataset import Base
 from PIL import Image
 
+
 class TestLR(Base):
     def __init__(self, opt):
         super(TestLR, self).__init__(opt)
@@ -18,4 +19,4 @@ class TestLR(Base):
         lr = self.load_img(lr_path)
         lr = self.np2tensor(lr)
 
-        return lr        
+        return lr

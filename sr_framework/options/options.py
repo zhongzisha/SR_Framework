@@ -5,17 +5,19 @@ import os.path as osp
 import torch
 import logging
 import sys
+
 sys.path.append('../')
 from utils import logger
 import shutil
 
+
 def parse(opt):
     path, name, pretrained = opt.opt, opt.name, opt.pretrained
-    
-    with open(path, 'r') as fp:        
+
+    with open(path, 'r') as fp:
         args = yaml.full_load(fp.read())
     lg = logger(name, 'log/{}.log'.format(name), pretrained)
-        
+
     # general settings
     args['name'] = name
     args['scale'] = opt.scale
@@ -24,7 +26,7 @@ def parse(opt):
 
     # setting for datasets
     scale = opt.scale
-       
+
     for phase, dataset_opt in args['datasets'].items():
         dataset_opt['scale'] = scale
         dataset_opt['split'] = phase
@@ -34,9 +36,9 @@ def parse(opt):
             dataset_opt['batch_size'] = opt.bs
         dataset_opt['train_Y'] = opt.train_Y
         if 'XN' in dataset_opt['dataroot_LR']:
-            dataset_opt['dataroot_LR'] = dataset_opt['dataroot_LR'].replace('N', str(opt.scale))        
+            dataset_opt['dataroot_LR'] = dataset_opt['dataroot_LR'].replace('N', str(opt.scale))
 
-    # setting for networks
+            # setting for networks
     args['networks']['upscale_factor'] = scale
     if opt.train_Y:
         args['networks']['in_channels'] = 1
@@ -45,15 +47,14 @@ def parse(opt):
     # setting for solver
     if opt.lr is not None:
         args['solver']['learning_rate'] = opt.lr
-    
-      
+
     # setting for GPU environment
     if opt.gpu_ids is not None:
         gpu_list = opt.gpu_ids
     else:
         gpu_list = ','.join([str(x) for x in args['gpu_ids']])
     lg.info('Available gpus: {}'.format(gpu_list))
-    os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list    
+    os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list
     if ',' in gpu_list:
         args['networks']['dataparallel'] = True
         lg.info('Using Dataparallel')
@@ -66,16 +67,16 @@ def parse(opt):
     args['paths']['epochs'] = osp.join(root, 'epochs')
     args['paths']['visual'] = osp.join(root, 'visual')
     args['paths']['records'] = osp.join(root, 'records')
-    
+
     if osp.exists(root) and pretrained is None:
         lg.info('Remove dir: [{}]'.format(root))
-        shutil.rmtree(root, True)    
-    
+        shutil.rmtree(root, True)
+
     for name, path in args['paths'].items():
         if not osp.exists(path):
             os.mkdir(path)
             lg.info('Create directory: {}'.format(path))
- 
+
     return dict_to_nonedict(args), lg
 
 

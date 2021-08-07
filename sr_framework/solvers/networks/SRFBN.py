@@ -4,6 +4,7 @@ import logging
 from .blocks import MeanShift
 import torch.nn.functional as F
 
+
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor):
         super(FeedbackBlock, self).__init__()
@@ -27,7 +28,7 @@ class FeedbackBlock(nn.Module):
         self.num_groups = num_groups
 
         self.compress_in = nn.Sequential(
-            nn.Conv2d(num_features*2, num_features, 1, 1, 0),
+            nn.Conv2d(num_features * 2, num_features, 1, 1, 0),
             nn.PReLU(init=0.2)
         )
 
@@ -40,7 +41,7 @@ class FeedbackBlock(nn.Module):
             if idx > 0:
                 self.uptranBlocks.append(
                     nn.Sequential(
-                        nn.Conv2d(num_features*(idx+1), num_features, 1, 1, 0),
+                        nn.Conv2d(num_features * (idx + 1), num_features, 1, 1, 0),
                         nn.PReLU(init=0.2)
                     )
                 )
@@ -53,7 +54,7 @@ class FeedbackBlock(nn.Module):
             if idx > 0:
                 self.downtranBlocks.append(
                     nn.Sequential(
-                        nn.Conv2d(num_features*(idx+1), num_features, 1, 1, 0),
+                        nn.Conv2d(num_features * (idx + 1), num_features, 1, 1, 0),
                         nn.PReLU(init=0.2)
                     )
                 )
@@ -65,7 +66,7 @@ class FeedbackBlock(nn.Module):
             )
 
         self.compress_out = nn.Sequential(
-            nn.Conv2d(num_features*num_groups, num_features, 1, 1, 0),
+            nn.Conv2d(num_features * num_groups, num_features, 1, 1, 0),
             nn.PReLU(init=0.2)
         )
 
@@ -77,10 +78,10 @@ class FeedbackBlock(nn.Module):
             self.last_hidden = torch.zeros(x.shape).cuda()
             self.last_hidden.copy_(x)
             self.first_FB = False
-    
-        x = torch.cat([x, self.last_hidden], dim = 1)
+
+        x = torch.cat([x, self.last_hidden], dim=1)
         x = self.compress_in(x)
-    
+
         lr_features = []
         hr_features = []
         lr_features.append(x)
@@ -88,18 +89,18 @@ class FeedbackBlock(nn.Module):
         for idx in range(self.num_groups):
             LD_L = torch.cat(lr_features, dim=1)
             if idx > 0:
-                LD_L = self.uptranBlocks[idx-1](LD_L)
+                LD_L = self.uptranBlocks[idx - 1](LD_L)
             hr_features.append(self.upBlocks[idx](LD_L))
-            
+
             LD_H = torch.cat(hr_features, dim=1)
             if idx > 0:
-                LD_H = self.downtranBlocks[idx-1](LD_H)
+                LD_H = self.downtranBlocks[idx - 1](LD_H)
             lr_features.append(self.downBlocks[idx](LD_H))
 
-        #del hr_features
+        # del hr_features
         output = torch.cat(lr_features[1:], dim=1)
         output = self.compress_out(output)
-        
+
         self.last_hidden = output
         return output
 
@@ -108,9 +109,10 @@ class FeedbackBlock(nn.Module):
 
 
 class SRFBN(nn.Module):
-    def __init__(self, upscale_factor, in_channels, num_fea, out_channels,  num_steps, num_groups, act_type='prelu', norm_type=None):
+    def __init__(self, upscale_factor, in_channels, num_fea, out_channels, num_steps, num_groups, act_type='prelu',
+                 norm_type=None):
         super(SRFBN, self).__init__()
-        
+
         if upscale_factor == 2:
             stride = 2
             padding = 2
@@ -131,20 +133,20 @@ class SRFBN(nn.Module):
         self.num_steps = num_steps
         self.num_features = num_features
         self.upscale_factor = upscale_factor
-        
+
         # RGB mean for DIV2K
         rgb_mean = [0.4469, 0.4367, 0.4044]
-        #rgb_mean = [0.4488, 0.4371, 0.4040]
+        # rgb_mean = [0.4488, 0.4371, 0.4040]
         rgb_std = [1.0, 1.0, 1.0]
         self.sub_mean = MeanShift(rgb_mean, rgb_std)
-    
+
         # LR feature extraction block
         self.conv_in = nn.Sequential(
-            nn.Conv2d(in_channels, 4*num_features, 3, 1, 1),
+            nn.Conv2d(in_channels, 4 * num_features, 3, 1, 1),
             nn.PReLU(init=0.2)
         )
         self.feat_in = nn.Sequential(
-            nn.Conv2d(4*num_features, num_features, 1, 1, 0),
+            nn.Conv2d(4 * num_features, num_features, 1, 1, 0),
             nn.PReLU(init=0.2)
         )
 
@@ -160,23 +162,22 @@ class SRFBN(nn.Module):
             nn.Conv2d(num_features, out_channels, 3, 1, 1),
         )
         self.add_mean = MeanShift(rgb_mean, rgb_std, sign=1)
-                
-    
+
     def forward(self, x):
         self.block.reset()
-                
+
         x = self.sub_mean(x)
-        #inter_res = F.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
+        # inter_res = F.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         # extract features
         x = self.conv_in(x)
         x = self.feat_in(x)
         return self.conv_out(self.out(x))
-        
+
         outs = []
         for _ in range(self.num_steps):
             h = self.block(x)
-            #h = torch.add(inter_res, self.conv_out(self.out(h)))
+            # h = torch.add(inter_res, self.conv_out(self.out(h)))
             h = self.conv_out(self.out(h))
             h = self.add_mean(h)
             outs.append(h)

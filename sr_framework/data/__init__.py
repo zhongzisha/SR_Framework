@@ -1,6 +1,7 @@
 import torch.utils.data as data
 import os
 
+
 def create_dataset(opt):
     if opt['mode'] == 'TrainLRHR':
         from .TrainLRHRDataset import TrainLRHR as D
@@ -14,6 +15,7 @@ def create_dataset(opt):
         raise NotImplementedError('{} Dataset is not implemented yet!'.format(opt['mode']))
     return D(opt)
 
+
 def create_loader(dataset, opt):
     if opt['split'] == 'train':
         bs = opt['batch_size']
@@ -23,5 +25,6 @@ def create_loader(dataset, opt):
         bs = 1
         shuffle = False
         num_workers = 1
-    
-    return data.DataLoader(dataset, batch_size=bs, shuffle=shuffle, num_workers=num_workers, pin_memory=True, drop_last=True)
+
+    return data.DataLoader(dataset, batch_size=bs, shuffle=shuffle, num_workers=num_workers, pin_memory=True,
+                           drop_last=True)

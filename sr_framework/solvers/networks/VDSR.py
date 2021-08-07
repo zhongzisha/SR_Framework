@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class VDSR(nn.Module):
     def __init__(self, upscale_factor, in_channels=3, num_fea=64, out_channels=3):
         super(VDSR, self).__init__()
@@ -24,10 +25,10 @@ class VDSR(nn.Module):
 
         # reconstruction
         self.reconstruct_conv = nn.Conv2d(num_fea, out_channels, 3, 1, 1)
-    
+
     def forward(self, x):
         x = F.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
-        
+
         # feature extraction
         out = self.fea_in(x)
 

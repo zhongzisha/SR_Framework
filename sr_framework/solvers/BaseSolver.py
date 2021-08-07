@@ -4,6 +4,7 @@ from torch.nn import init
 from torchsummary import summary
 import functools
 
+
 class BaseSolver(object):
     def __init__(self, opt):
         self.opt = opt
@@ -13,18 +14,18 @@ class BaseSolver(object):
 
         # skip unstable batch for stable training
         self.last_epoch_loss = 1e8
-        self.skip_threshold = opt['solver']['skip_threshold']        
-        
+        self.skip_threshold = opt['solver']['skip_threshold']
+
         # experiment dirs
         self.exp_root = opt['paths']['experiment_root']
         self.ckp_path = opt['paths']['epochs']
         self.records_path = opt['paths']['records']
         self.visual_path = opt['paths']['visual']
-        
+
         # log and visual scheme
         self.save_visual_step = opt['solver']['save_vis_step']
         self.save_ckp_step = opt['solver']['save_ckp_step']
-        
+
         self.best_epoch = 0
         self.cur_epoch = 0
         self.best_pred = 0.0
@@ -41,7 +42,6 @@ class BaseSolver(object):
 
         return params, GFlops
 
-
     def init_weight(self, model, init_type='kaiming', scale=1, std=0.02):
         if init_type == 'kaiming':
             init_func = functools.partial(self.init_weight_kaiming, scale=scale)
@@ -56,8 +56,8 @@ class BaseSolver(object):
     def init_weight_kaiming(self, m, scale=1):
         classname = m.__class__.__name__
         if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
-           if classname != 'MeanShift':
-                init.kaiming_normal_(m.weight.data) 
+            if classname != 'MeanShift':
+                init.kaiming_normal_(m.weight.data)
                 m.weight.data *= scale
                 if m.bias is not None:
                     m.bias.data.zero_()
@@ -70,7 +70,7 @@ class BaseSolver(object):
             init.constant_(m.weight.data, 1.0)
             m.weight.data *= scale
             init.constant_(m.bias.data, 0.0)
-    
+
     def init_weight_normal(self, m, std=0.02):
         classname = m.__class__.__name__
         if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):

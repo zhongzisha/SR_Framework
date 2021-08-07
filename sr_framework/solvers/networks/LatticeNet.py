@@ -4,6 +4,7 @@ from .blocks import MeanShift, std
 import torch.nn.functional as F
 from torchsummaryX import summary
 
+
 class CoffConv(nn.Module):
     def __init__(self, num_fea):
         super(CoffConv, self).__init__()
@@ -15,7 +16,7 @@ class CoffConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Sigmoid()
         )
-        
+
         self.std = std
         self.lower_branch = nn.Sequential(
             nn.Conv2d(num_fea, num_fea // 16, 1, 1, 0),
@@ -31,7 +32,7 @@ class CoffConv(nn.Module):
         lower = self.lower_branch(lower)
 
         out = torch.add(upper, lower) / 2
-        
+
         return out
 
 
@@ -62,21 +63,20 @@ class LBlock(nn.Module):
         self.A2_coff_conv = CoffConv(num_fea)
         self.B2_coff_conv = CoffConv(num_fea)
 
-        self.fuse = nn.Conv2d(num_fea*2, num_fea, 1, 1, 0)
-
+        self.fuse = nn.Conv2d(num_fea * 2, num_fea, 1, 1, 0)
 
     def forward(self, x):
         H = self.H_conv(x)
         A1 = self.A1_coff_conv(H)
-        P1 = x + A1*H
+        P1 = x + A1 * H
         B1 = self.B1_coff_conv(x)
-        Q1 = H + B1*x
+        Q1 = H + B1 * x
 
         G = self.G_conv(P1)
         B2 = self.B2_coff_conv(G)
-        Q2 = Q1 + B2*G
+        Q2 = Q1 + B2 * G
         A2 = self.A2_coff_conv(Q1)
-        P2 = G + Q1*A2
+        P2 = G + Q1 * A2
 
         out = self.fuse(torch.cat([P2, Q2], dim=1))
 
@@ -86,26 +86,26 @@ class LBlock(nn.Module):
 class BFModule(nn.Module):
     def __init__(self, num_fea):
         super(BFModule, self).__init__()
-        self.conv4 = nn.Conv2d(num_fea, num_fea//2, 1, 1, 0)
-        self.conv3 = nn.Conv2d(num_fea, num_fea//2, 1, 1, 0)
-        self.fuse43 = nn.Conv2d(num_fea, num_fea//2, 1, 1, 0)
-        self.conv2 = nn.Conv2d(num_fea, num_fea//2, 1, 1,0)        
-        self.fuse32 = nn.Conv2d(num_fea, num_fea//2, 1, 1, 0)
-        self.conv1 = nn.Conv2d(num_fea, num_fea//2, 1, 1, 0)
+        self.conv4 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
+        self.conv3 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
+        self.fuse43 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
+        self.conv2 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
+        self.fuse32 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
+        self.conv1 = nn.Conv2d(num_fea, num_fea // 2, 1, 1, 0)
 
         self.act = nn.ReLU(inplace=True)
 
     def forward(self, x_list):
         H4 = self.act(self.conv4(x_list[3]))
         H3_half = self.act(self.conv3(x_list[2]))
-        H3 = self.fuse43(torch.cat([H4, H3_half], dim=1))      
+        H3 = self.fuse43(torch.cat([H4, H3_half], dim=1))
         H2_half = self.act(self.conv2(x_list[1]))
         H2 = self.fuse32(torch.cat([H3, H2_half], dim=1))
         H1_half = self.act(self.conv1(x_list[0]))
         H1 = torch.cat([H2, H1_half], dim=1)
 
         return H1
-        
+
 
 class LatticeNet(nn.Module):
     def __init__(self, upscale_factor=2, in_channels=3, num_fea=64, out_channels=3, num_LBs=4):
@@ -132,7 +132,7 @@ class LatticeNet(nn.Module):
         # Reconstruction
         self.upsample = nn.Sequential(
             nn.Conv2d(num_fea, num_fea, 3, 1, 1),
-            nn.Conv2d(num_fea, out_channels * (upscale_factor**2), 3, 1, 1),
+            nn.Conv2d(num_fea, out_channels * (upscale_factor ** 2), 3, 1, 1),
             nn.PixelShuffle(upscale_factor)
         )
 
@@ -140,7 +140,7 @@ class LatticeNet(nn.Module):
         x = self.sub_mean(x)
 
         # feature extraction
-        fea = self.fea_conv(x)    
+        fea = self.fea_conv(x)
 
         # LBlocks
         outs = []
@@ -159,9 +159,10 @@ class LatticeNet(nn.Module):
 
         return out
 
+
 if __name__ == '__main__':
     # 777K, 43.6G
     s = 4
     model = LatticeNet(upscale_factor=s).to('cuda')
-    in_ = torch.randn(1, 3, round(720/s), round(1280/s)).to('cuda')
+    in_ = torch.randn(1, 3, round(720 / s), round(1280 / s)).to('cuda')
     summary(model, in_)

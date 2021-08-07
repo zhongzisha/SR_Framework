@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class DRCN(nn.Module):
     def __init__(self, upscale_factor=2, in_channels=3, num_fea=256, out_channels=3, recurisive_times=9):
         super(DRCN, self).__init__()
@@ -32,7 +33,7 @@ class DRCN(nn.Module):
 
     def forward(self, x):
         x = F.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
-        
+
         # feature extraction
         out = self.fea_in(x)
 
@@ -49,4 +50,4 @@ class DRCN(nn.Module):
             recon_h = self.reconstruct(H[i])
             recon.append(recon_h)
 
-        return sum(recon) / self.recurisive_times + x 
+        return sum(recon) / self.recurisive_times + x

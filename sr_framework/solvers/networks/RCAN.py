@@ -2,16 +2,17 @@ import torch
 import torch.nn as nn
 from .blocks import MeanShift, UpSampler
 from torchsummaryX import summary
-import numpy as np 
+import numpy as np
+
 
 class CA(nn.Module):
     def __init__(self, num_fea=64, reduction=16):
         super(CA, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.conv_du = nn.Sequential(
-            nn.Conv2d(num_fea, num_fea//reduction, 1, 1, 0),
+            nn.Conv2d(num_fea, num_fea // reduction, 1, 1, 0),
             nn.ReLU(True),
-            nn.Conv2d(num_fea//reduction, num_fea, 1, 1, 0),
+            nn.Conv2d(num_fea // reduction, num_fea, 1, 1, 0),
             nn.Sigmoid()
         )
 
@@ -43,13 +44,13 @@ class RCAB(nn.Module):
 class RG(nn.Module):
     def __init__(self, num_fea=64, num_RCABs=10):
         super(RG, self).__init__()
-        
+
         RCABs = []
         for i in range(num_RCABs):
             RCABs.append(RCAB(num_fea=num_fea))
         RCABs.append(nn.Conv2d(num_fea, num_fea, 3, 1, 1))
         self.RCABs = nn.Sequential(*RCABs)
-        
+
     def forward(self, x):
         res = self.RCABs(x)
         out = res + x
@@ -100,9 +101,10 @@ class RCAN(nn.Module):
 
         return out
 
+
 if __name__ == '__main__':
     # 15.592M, 916.9G
     s = 4
     model = RCAN(upscale_factor=s).to('cuda:0')
-    in_ = torch.randn(1, 3, round(720/s), round(1280/s)).to('cuda:0')
-    summary(model ,in_)
+    in_ = torch.randn(1, 3, round(720 / s), round(1280 / s)).to('cuda:0')
+    summary(model, in_)

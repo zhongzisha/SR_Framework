@@ -14,14 +14,17 @@ from .MemNet import MemNet
 from .RFDN import RFDN
 from .DLSR import DLSR
 
+
 def create_model(opt):
     which_model = opt['which_model']
     if which_model == 'SRFBN':
-        model = SRFBN(in_channels=opt['in_channels'], out_channels=opt['out_channels'], num_fea=opt['num_fea'], num_steps=opt['num_steps'], num_groups=opt['num_groups'], upscale_factor=opt['upscale_factor'])
+        model = SRFBN(in_channels=opt['in_channels'], out_channels=opt['out_channels'], num_fea=opt['num_fea'],
+                      num_steps=opt['num_steps'], num_groups=opt['num_groups'], upscale_factor=opt['upscale_factor'])
     elif which_model == 'IDN':
         model = IDN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'])
     elif which_model == 'LatticeNet':
-        model = LatticeNet(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['num_LBs'])
+        model = LatticeNet(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'],
+                           opt['num_LBs'])
     elif which_model == 'EDSR':
         model = EDSR(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['n_resblocks'])
     elif which_model == 'IMDN':
@@ -35,13 +38,16 @@ def create_model(opt):
     elif which_model == 'DRRN':
         model = DRRN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['num_U'])
     elif which_model == 'DRCN':
-        model = DRCN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['recurisive_times'])
+        model = DRCN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'],
+                     opt['recurisive_times'])
     elif which_model == 'FSRCNN':
         model = FSRCNN(opt['upscale_factor'], opt['in_channels'], opt['out_channels'], opt['d'], opt['s'], opt['m'])
     elif which_model == 'RCAN':
-        model = RCAN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['num_RGs'], opt['num_RCABs'])
+        model = RCAN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['num_RGs'],
+                     opt['num_RCABs'])
     elif which_model == 'MemNet':
-        model = MemNet(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'], opt['num_memblock'], opt['num_resblock'])
+        model = MemNet(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['out_channels'],
+                       opt['num_memblock'], opt['num_resblock'])
     elif which_model == 'RFDN':
         model = RFDN(opt['upscale_factor'], opt['in_channels'], opt['num_fea'], opt['num_blocks'], opt['out_channels'])
     elif which_model == 'DLSR':

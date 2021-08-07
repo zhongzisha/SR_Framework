@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from .blocks import MeanShift, UpSampler, ResBlock
 
+
 class EDSR(nn.Module):
     def __init__(self, upscale_factor=2, in_channels=3, num_fea=64, out_channels=3, n_resblocks=16):
         super(EDSR, self).__init__()

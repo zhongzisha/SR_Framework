@@ -5,6 +5,7 @@ import os.path as osp
 from PIL import Image
 import logging
 import sys
+
 sys.path.append('../')
 from utils import rgb2ycbcr
 
@@ -12,10 +13,11 @@ from utils import rgb2ycbcr
 Train or validate for DIV2Kdataset
 '''
 
+
 class DIV2KDataset(Base):
     def __init__(self, opt):
         super(DIV2KDataset, self).__init__(opt)
-        self.dataroot_hr = opt['dataroot_HR']   
+        self.dataroot_hr = opt['dataroot_HR']
         self.dataroot_lr = opt['dataroot_LR']
         self.filename_path = opt['filename_path']
         self.use_flip = opt['use_flip']
@@ -27,16 +29,14 @@ class DIV2KDataset(Base):
         self.train_Y = opt['train_Y']
         self.enlarge_times = opt['enlarge_times']
 
-        self.img_list = []        
+        self.img_list = []
         with open(self.filename_path, 'r') as f:
             filenames = f.readlines()
         for line in filenames:
             self.img_list.append(line.strip())
 
-        
     def __len__(self):
         return len(self.img_list) * self.enlarge_times
-
 
     def __getitem__(self, idx):
         idx = idx % len(self.img_list)
@@ -57,8 +57,8 @@ class DIV2KDataset(Base):
         if self.split == 'train':
             lr_patch, hr_patch = self.get_patch(lr, hr, self.ps, self.scale)
             lr, hr = self.augment(lr_patch, hr_patch, self.use_flip, self.use_rot)
-        lr ,hr = self.np2tensor(lr), self.np2tensor(hr)
-        
+        lr, hr = self.np2tensor(lr), self.np2tensor(hr)
+
         data['LR'] = lr
         data['HR'] = hr
 

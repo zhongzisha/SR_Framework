@@ -3,9 +3,14 @@ import torch.nn as nn
 import sys
 import math
 
+
 class MeanShift(nn.Conv2d):
-    def __init__(self, mean=[0.4488, 0.4371, 0.4040], std=[1.0, 1.0, 1.0], sign=-1):
-        super(MeanShift, self).__init__(3, 3, 1)
+    def __init__(self, mean=None, std=None, sign=-1):
+        super(MeanShift, self).__init__(3, 3, (1, 1))
+        if std is None:
+            std = [1.0, 1.0, 1.0]
+        if mean is None:
+            mean = [0.4488, 0.4371, 0.4040]
         std = torch.Tensor(std)
         self.weight.data = torch.eye(3).view(3, 3, 1, 1)
         self.weight.data.div_(std.view(3, 1, 1, 1))
@@ -21,9 +26,9 @@ class CA(nn.Module):
         self.avg = nn.AdaptiveAvgPool2d(1)
         self.max = nn.AdaptiveMaxPool2d(1)
 
-        self.fc1 = nn.Conv2d(in_channels, in_channels//ratio, 1, 1, 0, bias=False)
-        self.fc2 = nn.Conv2d(in_channels//ratio, in_channels, 1, 1, 0, bias=False)
-        
+        self.fc1 = nn.Conv2d(in_channels, in_channels // ratio, 1, 1, 0, bias=False)
+        self.fc2 = nn.Conv2d(in_channels // ratio, in_channels, 1, 1, 0, bias=False)
+
         self.act = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
@@ -33,18 +38,19 @@ class CA(nn.Module):
 
         avg_out = self.fc2(self.act(self.fc1(avg_value)))
         max_out = self.fc2(self.act(self.fc1(max_value)))
-        
+
         out = avg_out + max_out
-        
+
         return self.sigmoid(out)
+
 
 class ResBlock(nn.Module):
     def __init__(self, num_fea=64):
         super(ResBlock, self).__init__()
         self.res_conv = nn.Sequential(
-            nn.Conv2d(num_fea, num_fea, 3, 1, 1),
+            nn.Conv2d(num_fea, num_fea, (3, 3), (1, 1), 1),
             nn.ReLU(True),
-            nn.Conv2d(num_fea, num_fea, 3, 1, 1)
+            nn.Conv2d(num_fea, num_fea, (3, 3), (1, 1), 1)
         )
 
     def forward(self, x):
@@ -52,19 +58,20 @@ class ResBlock(nn.Module):
 
         return out + x
 
+
 class UpSampler(nn.Module):
     def __init__(self, upscale_factor=2, num_fea=64):
         super(UpSampler, self).__init__()
-        if (upscale_factor & (upscale_factor-1)) == 0: # upscale_factor = 2^n
+        if (upscale_factor & (upscale_factor - 1)) == 0:  # upscale_factor = 2^n
             m = []
             for i in range(int(math.log(upscale_factor, 2))):
-                m.append(nn.Conv2d(num_fea, num_fea * 4, 3, 1, 1))
+                m.append(nn.Conv2d(num_fea, num_fea * 4, (3, 3), (1, 1), 1))
                 m.append(nn.PixelShuffle(2))
             self.upsample = nn.Sequential(*m)
 
         elif upscale_factor == 3:
             self.upsample = nn.Sequential(
-                nn.Conv2d(num_fea, num_fea * 9, 3, 1, 1),
+                nn.Conv2d(num_fea, num_fea * 9, (3, 3), (1, 1), 1),
                 nn.PixelShuffle(3)
             )
         else:
@@ -72,29 +79,31 @@ class UpSampler(nn.Module):
 
     def forward(self, x):
         return self.upsample(x)
-        
+
 
 def mean_channels(x):
-    assert(x.dim() == 4)
+    assert (x.dim() == 4)
     spatial_sum = x.sum(3, keepdim=True).sum(2, keepdim=True)
     return spatial_sum / (x.shape[2] * x.shape[3])
 
+
 def std(x):
-    assert(x.dim() == 4)
+    assert (x.dim() == 4)
     x_mean = mean_channels(x)
     x_var = (x - x_mean).pow(2).sum(3, keepdim=True).sum(2, keepdim=True) / (x.shape[2] * x.shape[3])
     return x_var.pow(0.5)
+
 
 class CCA(nn.Module):
     def __init__(self, num_fea, reduction=16):
         super(CCA, self).__init__()
         self.avg = nn.AdaptiveAvgPool2d(1)
         self.std = std
-        
+
         self.atten_conv = nn.Sequential(
-            nn.Conv2d(num_fea, num_fea // reduction, 1, 1, 0, bias=True),
+            nn.Conv2d(num_fea, num_fea // reduction, (1, 1), (1, 1), 0, bias=True),
             nn.ReLU(True),
-            nn.Conv2d(num_fea // reduction, num_fea, 1, 1, 0, bias=True),
+            nn.Conv2d(num_fea // reduction, num_fea, (1, 1), (1, 1), 0, bias=True),
             nn.Sigmoid()
         )
 
@@ -103,6 +112,7 @@ class CCA(nn.Module):
         atten = self.atten_conv(atten)
 
         return x * atten
+
 
 class IMDN_Module(nn.Module):
     def __init__(self, num_fea, distill_ratio=0.25):

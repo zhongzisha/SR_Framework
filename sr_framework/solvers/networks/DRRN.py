@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class DRRN(nn.Module):
     def __init__(self, upscale_factor=2, in_channels=3, num_fea=128, out_channels=3, num_U=9):
         super(DRRN, self).__init__()
@@ -39,7 +40,7 @@ class DRRN(nn.Module):
         for i in range(self.num_U):
             out = self.body(out)
             out += x
-        
+
         # reconstruction
         out = self.reconstruct(out)
 

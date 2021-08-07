@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class FeatureExtraction(nn.Module):
     def __init__(self, upscale_factor, in_channels=3, num_fea=64):
         super(FeatureExtraction, self).__init__()
@@ -54,17 +55,17 @@ class ImageReconstruction(nn.Module):
         L = self.conv_L(LR)
         H = self.conv_H(HR_res)
 
-        return L+H
+        return L + H
 
 
 class LapSRN(nn.Module):
     def __init__(self, upscale_factor, in_channels=3, num_fea=64, out_channels=3):
         super(LapSRN, self).__init__()
-        upscale_factor_level = 2 if upscale_factor==4 else upscale_factor
+        upscale_factor_level = 2 if upscale_factor == 4 else upscale_factor
 
         self.feature_extraction1 = FeatureExtraction(upscale_factor_level, in_channels, num_fea)
         self.image_reconstruction1 = ImageReconstruction(upscale_factor_level, num_fea, out_channels)
-        
+
         if upscale_factor == 4:
             self.feature_extraction2 = FeatureExtraction(upscale_factor_level, num_fea, num_fea)
             self.image_reconstruction2 = ImageReconstruction(upscale_factor_level, num_fea, out_channels)
